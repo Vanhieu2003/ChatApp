@@ -88,3 +88,32 @@ export const signOut = async (req, res) => {
         res.status(500).json({ message: "Lỗi máy chủ nội bộ" });
     }
 }
+
+export const refreshToken = async (req, res) => {
+    try{
+       const token = req.cookies?.refreshToken;
+         if (!token) {
+            return res.status(401).json({message:"Token không hợp lệ hoặc đã hết hạn"});
+         }
+
+         const session = await Session.find({refreshToken: token});
+         if(!session){
+            return res.status(403).json({message:"Token không hợp lệ hoặc đã hết hạn"});
+         }
+
+         if(session.expiresAt < new Date()){
+            return res.status(403).json({message:"Token hết hạn"});
+         }
+
+         const accessToken = jwt.sign({
+            userId: session.userId
+         }, process.env.ACCESS_TOKEN_SECRET,{expiresIn:ACCESS_TOKEN_TTL})
+
+        return res.status(200).json({accessToken});
+
+
+    }catch (error){
+        console.error("Lỗi gọi refreshToken",error);
+        return res.status(500).json({message:"Lỗi hệ thống"})
+    }
+}
