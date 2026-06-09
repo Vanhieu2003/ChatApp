@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 const ChatAppPage = () => {
 
   const user = useAuthStore((s) => s.user);
+  console.log(user?.username);
   return (
 
     <div>

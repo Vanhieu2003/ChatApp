@@ -52,7 +52,7 @@ export const signIn = async (req, res) => {
             return res.status(400).json({ message: "Mật khẩu/ username không chính xác" });
         }
 
-        const token = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
+        const accessToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
         const refreshToken = crypto.randomBytes(64).toString("hex");
 
         await Session.create({ userId: user._id, refreshToken, expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL * 1000) });
@@ -64,7 +64,7 @@ export const signIn = async (req, res) => {
             maxAge: REFRESH_TOKEN_TTL * 1000
         });
 
-        return res.status(200).json({ message: `User ${user.username} đăng nhập thành công`,  token });
+        return res.status(200).json({ message: `User ${user.username} đăng nhập thành công`,  accessToken });
 
 
     }catch (error) {
@@ -90,30 +90,38 @@ export const signOut = async (req, res) => {
 }
 
 export const refreshToken = async (req, res) => {
-    try{
-       const token = req.cookies?.refreshToken;
-         if (!token) {
-            return res.status(401).json({message:"Token không hợp lệ hoặc đã hết hạn"});
-         }
-
-         const session = await Session.find({refreshToken: token});
-         if(!session){
-            return res.status(403).json({message:"Token không hợp lệ hoặc đã hết hạn"});
-         }
-
-         if(session.expiresAt < new Date()){
-            return res.status(403).json({message:"Token hết hạn"});
-         }
-
-         const accessToken = jwt.sign({
-            userId: session.userId
-         }, process.env.ACCESS_TOKEN_SECRET,{expiresIn:ACCESS_TOKEN_TTL})
-
-        return res.status(200).json({accessToken});
-
-
-    }catch (error){
-        console.error("Lỗi gọi refreshToken",error);
-        return res.status(500).json({message:"Lỗi hệ thống"})
+  try {
+    // lấy refresh token từ cookie
+    const token = req.cookies?.refreshToken;
+    if (!token) {
+      return res.status(401).json({ message: "Token không tồn tại." });
     }
-}
+
+    // so với refresh token trong db
+    const session = await Session.findOne({ refreshToken: token });
+
+    if (!session) {
+      return res.status(403).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+    }
+
+    // kiểm tra hết hạn chưa
+    if (session.expiresAt < new Date()) {
+      return res.status(403).json({ message: "Token đã hết hạn." });
+    }
+
+    // tạo access token mới
+    const accessToken = jwt.sign(
+      {
+        userId: session.userId,
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: ACCESS_TOKEN_TTL }
+    );
+
+    // return
+    return res.status(200).json({ accessToken });
+  } catch (error) {
+    console.error("Lỗi khi gọi refreshToken", error);
+    return res.status(500).json({ message: "Lỗi hệ thống" });
+  }
+};

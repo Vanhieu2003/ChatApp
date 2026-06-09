@@ -17,21 +17,21 @@ loading: false,
 
     },
 signIn: async (username: string, password: string) => {
-   try {
-     set({loading: true});
+    try {
+      set({ loading: true });
 
-    const {accessToken} = await authService.signIn(username, password);
-    get().setAccessToken(accessToken);
+      const { accessToken } = await authService.signIn(username, password);
+      get().setAccessToken(accessToken);
 
-    await get().fetchMe();
+      await get().fetchMe();
 
-    toast.success("Đăng nhập thành công");
-   } catch (error) {
-    console.log("Login error:", error);
-    toast.error("Đăng nhập thất bại");
-   }finally{
-    set({loading: false});
-   }
+      toast.success("Chào mừng bạn quay 🎉");
+    } catch (error) {
+      console.error(error);
+      toast.error("Đăng nhập không thành công!");
+    } finally {
+      set({ loading: false });
+    }
 },
 
 signUp: async (username: string, email: string, password: string, firstName: string, lastName: string) => {
