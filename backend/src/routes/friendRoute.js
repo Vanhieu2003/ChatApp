@@ -4,10 +4,10 @@ import { sendFriendRequest,acceptFriendRequest,declineFriendRequest,getAllFriend
 const router = express.Router();
 
 
-router.post("/requets",sendFriendRequest);
+router.post("/requests",sendFriendRequest);
 router.post("/request/:requestId/accept",acceptFriendRequest);
 router.post("/request/:requestId/decline",declineFriendRequest);
 router.get("/",getAllFriend);
-router.get("/requets",getFriendRequests);
+router.get("/requests",getFriendRequests);
 
 export default router;
